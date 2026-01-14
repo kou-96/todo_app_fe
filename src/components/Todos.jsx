@@ -27,10 +27,7 @@ export default function Todos() {
     try {
       const res = await apiFetch("/todos");
       const data = await res.json();
-
-      // サーバー側で順序固定していない場合、ここでid順にソート
       data.sort((a, b) => a.id - b.id);
-
       setTodos(data);
     } catch (err) {
       if (err.message === "AUTH_EXPIRED") {
@@ -49,7 +46,6 @@ export default function Todos() {
       });
       const newTodo = await res.json();
 
-      // 状態だけ更新して再取得なし → チェックボックス押しても順番崩れない
       setTodos((prev) => [...prev, newTodo]);
       setTitle("");
     } catch (err) {
@@ -67,7 +63,6 @@ export default function Todos() {
         }),
       });
 
-      // 状態だけ更新
       setTodos((prev) =>
         prev.map((todo) =>
           todo.id === id ? { ...todo, title: newTitle, is_complete: isComplete } : todo
@@ -84,7 +79,6 @@ export default function Todos() {
     try {
       await apiFetch(`/todos/${id}`, { method: "DELETE" });
 
-      // 状態だけ更新
       setTodos((prev) => prev.filter((todo) => todo.id !== id));
     } catch (err) {
       if (err.message === "AUTH_EXPIRED") forceLogout("expired");
