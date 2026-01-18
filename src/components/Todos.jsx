@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link} from "react-router-dom";
 import { apiFetch } from "../api/auth";
 
 export default function Todos() {
@@ -10,13 +10,15 @@ export default function Todos() {
 
   const navigate = useNavigate();
 
-  const forceLogout = (type) => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+  // ログアウト関数
+  const forceLogout = async (type) => {
+    try {
+      await apiFetch("/auth/logout", { method: "PUT" });
+    } catch (_) {}
 
     if (type === "expired") {
       alert("ログイン情報を失ったので、再度ログインしてください");
-    } else if (type === "manual") {
+    } else {
       alert("ログアウトしました");
     }
 
@@ -45,7 +47,6 @@ export default function Todos() {
         body: JSON.stringify({ title }),
       });
       const newTodo = await res.json();
-
       setTodos((prev) => [...prev, newTodo]);
       setTitle("");
     } catch (err) {
@@ -57,12 +58,8 @@ export default function Todos() {
     try {
       await apiFetch(`/todos/${id}`, {
         method: "PUT",
-        body: JSON.stringify({
-          title: newTitle,
-          is_complete: isComplete,
-        }),
+        body: JSON.stringify({ title: newTitle, is_complete: isComplete }),
       });
-
       setTodos((prev) =>
         prev.map((todo) =>
           todo.id === id ? { ...todo, title: newTitle, is_complete: isComplete } : todo
@@ -74,11 +71,9 @@ export default function Todos() {
   };
 
   const deleteTodo = async (id) => {
-    if (!window.confirm("削除しますか？")) return;
 
     try {
       await apiFetch(`/todos/${id}`, { method: "DELETE" });
-
       setTodos((prev) => prev.filter((todo) => todo.id !== id));
     } catch (err) {
       if (err.message === "AUTH_EXPIRED") forceLogout("expired");
@@ -92,7 +87,6 @@ export default function Todos() {
 
   const saveEdit = async (todo) => {
     if (!editingTitle.trim()) return;
-
     await updateTodo(todo.id, editingTitle, todo.is_complete);
     setEditingId(null);
     setEditingTitle("");
@@ -123,9 +117,7 @@ export default function Todos() {
             <input
               type="checkbox"
               checked={todo.is_complete}
-              onChange={() =>
-                updateTodo(todo.id, todo.title, !todo.is_complete)
-              }
+              onChange={() => updateTodo(todo.id, todo.title, !todo.is_complete)}
             />
 
             {editingId === todo.id ? (
@@ -146,24 +138,21 @@ export default function Todos() {
                 >
                   {todo.title}
                 </span>
-                <button
-                  style={{ marginLeft: "8px" }}
-                  onClick={() => startEdit(todo)}
-                >
+                <button style={{ marginLeft: "8px" }} onClick={() => startEdit(todo)}>
                   編集
                 </button>
               </>
             )}
 
-            <button
-              style={{ marginLeft: "8px" }}
-              onClick={() => deleteTodo(todo.id)}
-            >
+            <button style={{ marginLeft: "8px" }} onClick={() => deleteTodo(todo.id)}>
               削除
             </button>
           </li>
         ))}
       </ul>
+      <p>
+        アカウントを削除しますか？ <Link to="/delete">削除する</Link>
+      </p>
     </div>
   );
 }
