@@ -7,40 +7,54 @@ export default function Signup() {
   const navigate = useNavigate();
 
   const signup = async () => {
-    const res = await fetch("http://localhost:5000/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (!res.ok) {
-      alert("サインアップ失敗");
+    if (!email.trim() || !password.trim()) {
+      alert("Email と Password を入力してください");
       return;
     }
 
-    const data = await res.json();
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
-    alert("サインアップ成功");
-    navigate("/todos");
+    try {
+      const res = await fetch("http://localhost:5000/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "サインアップ失敗");
+        return;
+      }
+
+      alert("サインアップ成功！そのままログインします。");
+      navigate("/todos");
+    } catch (err) {
+      console.error(err);
+      alert("サインアップエラー");
+    }
   };
 
   return (
-    <div>
+    <div style={{ maxWidth: "500px", margin: "0 auto" }}>
       <h1>サインアップ</h1>
 
-      <input placeholder="Email" onChange={e => setEmail(e.target.value)} />
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
       <input
         type="password"
         placeholder="Password"
-        onChange={e => setPassword(e.target.value)}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
       />
 
-      <button onClick={signup}>登録</button>
+      <button onClick={signup}>サインアップ</button>
 
       <p>
-        すでにアカウントがありますか？
-        <Link to="/login">ログイン</Link>
+        すでにアカウントをお持ちですか？ <Link to="/login">ログイン</Link>
       </p>
     </div>
   );
